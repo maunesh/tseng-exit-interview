@@ -19,7 +19,8 @@ function showPieChart($data) {
 
 
     // Starts at 1 and increments each time the function is called.
-    static $id = 1;
+    static $id = 0;
+    $id++;
 ?>
     <div class="pie-chart" id="pie-chart-<? echo $id; ?>">
     </div>
