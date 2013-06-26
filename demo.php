@@ -1,15 +1,27 @@
 <?
 include "./pieChart.php";
 showPieChart(array(
-        "questionText" => "What degree did you earn from the Tseng College?",
+        "questionText" => "Where did you take online courses before coming to the Tseng College?",
         "responses" => array(
             array(
-                "choiceText" => "answered question",
-                "count" => 4
+                "choiceText" => "CSUN",
+                "count" => 2
             ),
             array(
-                "choiceText" => "skipped question",
-                "count" => 6
+                "choiceText" => "UCLA",
+                "count" => 2
+            ),
+            array(
+                "choiceText" => "ASU",
+                "count" => 1
+            ),
+            array(
+                "choiceText" => "Santa Monica College",
+                "count" => 2
+            ),
+            array(
+                "choiceText" => "Pierce College",
+                "count" => 2
             )
         )
     ));

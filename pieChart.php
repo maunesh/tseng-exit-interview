@@ -103,7 +103,7 @@ function showPieChart($data) {
 
         var radius = 100;
         ctx.fillStyle = "black";
-        ctx.fillText("Legend:", 2 * radius + 30, 20);
+        ctx.fillText("Legend:", 2 * radius + 40, 20);
         for(var i = 0; i < responses.length; i++) {
 
             // Do the drawing on the canvas
@@ -114,9 +114,9 @@ function showPieChart($data) {
 
             // Draw the legend
             ctx.fillStyle = color;
-            ctx.fillRect(2 * radius, 20 * i + 30, 10, 10);
+            ctx.fillRect(2 * radius + 10, 20 * i + 30, 10, 10);
             ctx.fillStyle = "black";
-            ctx.fillText(responses[i].choiceText, 2 * radius + 15, 20 * i + 40);
+            ctx.fillText(responses[i].choiceText, 2 * radius + 25, 20 * i + 40);
 
             // For accessibility
             var responseAsText = document.createElement("p");
