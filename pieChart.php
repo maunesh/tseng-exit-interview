@@ -35,10 +35,13 @@ function showPieChart($data) {
         var questionText = data.questionText;
         var totalResponses = 0;
 
-        function randomColor() {
+        var VERTICAL_COMPRESSION = 0.8;
+
+        function randomColor(i) {
             //var color = "#" + (Math.random()*(1<<24)|0).toString(16);
             var colors = ["red", "orange", "yellow", "green", "blue", "purple", "black", "pink", "gray"];
-            var color = colors[(Math.random() * colors.length)|0];
+            if(typeof i != "undefined") var color = colors[i];
+            else var color = colors[(Math.random() * colors.length)|0];
             return color;
         }
         for(var i = 0; i < responses.length; i++) {
@@ -46,7 +49,7 @@ function showPieChart($data) {
                 // If the wedge doesn't have a color, give it a random one.
                 // Prevent two things having the same color, too.
                 do {
-                    responses[i].color = randomColor();
+                    responses[i].color = randomColor(i);
                     var collision = false;
                     for(var j = 0; j < i; j++) {
                         if(responses[j].color == responses[i].color) {
@@ -71,50 +74,101 @@ function showPieChart($data) {
         // The chart itself is an HTML canvas. There are upsides and downsides
         // to this approach. On the upside, 
         var chart = document.createElement("canvas");
-        chart.width = 400;
+        chart.width = 500;
         chart.height = chart.width / 2;
         chart.style.height = chart.height;
         chart.style.width = chart.width;
         chartContainer.appendChild(chart);
+        chart.addEventListener("mousemove", showActiveSegment);
 
         // Here is where the actual drawing takes place
         var ctx = chart.getContext("2d");
         var center = {
-            x: chart.width / 4,
+            x: chart.width / 5,
             y: chart.height / 2
         };
-        ctx.drawWedge = function(start, end, radius, color) {
-            // Start and end are numbers from 0 to 1
+        ctx.drawWedgeBG = function(start, end, radius, color, bold) {
+            ctx.scale(1, VERTICAL_COMPRESSION);
             ctx.beginPath();
-            ctx.moveTo(center.x, center.y);
+            // First the 3d part
             var startArc = {
                 x: center.x + Math.cos(start * 2 * Math.PI) * radius,
                 y: center.y + Math.sin(start * 2 * Math.PI) * radius
             }
+            var endArc = {
+                x: center.x + Math.cos(start * 2 * Math.PI) * radius,
+                y: center.y + Math.sin(start * 2 * Math.PI) * radius
+            }
+            var offset3d = {
+                x: 0,
+                y: 15
+            };
+            ctx.moveTo(startArc.x, startArc.y);
+            ctx.arc(center.x, center.y, radius, 2 * Math.PI * start, 2 * Math.PI * end, false);
+            ctx.arc(center.x + offset3d.x, center.y + offset3d.y, radius, 2 * Math.PI * end, 2 * Math.PI * start, true);
+            ctx.fillStyle = color;
+            ctx.closePath();
+            ctx.strokeStyle = "black";
+            ctx.fill();
+            if(bold) ctx.lineWidth = 3;
+            else ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.scale(1, 1 / VERTICAL_COMPRESSION);
+        }
+        ctx.drawWedge = function(start, end, radius, color, bold) {
+            // Start and end are numbers from 0 to 1
+            ctx.scale(1, VERTICAL_COMPRESSION);
+            // First the 3d part
+            var startArc = {
+                x: center.x + Math.cos(start * 2 * Math.PI) * radius,
+                y: center.y + Math.sin(start * 2 * Math.PI) * radius
+            }
+            var endArc = {
+                x: center.x + Math.cos(start * 2 * Math.PI) * radius,
+                y: center.y + Math.sin(start * 2 * Math.PI) * radius
+            }
+            ctx.beginPath();
+            ctx.moveTo(center.x, center.y);
             ctx.lineTo(startArc.x, startArc.y);
             
             // centerX (px), centerY (px), radius (px), startAngle (rad), endAngle (rad), counterclockwise (boolean)?
             ctx.arc(center.x, center.y, radius, 2 * Math.PI * start, 2 * Math.PI * end, false);
             ctx.fillStyle = color;
             ctx.closePath();
+            ctx.strokeStyle = "black";
             ctx.fill();
+            if(bold) ctx.lineWidth = 3;
+            else ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.scale(1, 1 / VERTICAL_COMPRESSION);
         }
 
-        var responsesSoFar = 0;
 
         var radius = 100;
         ctx.fillStyle = "black";
         ctx.fillText("Legend:", 2 * radius + 40, 20);
-        for(var i = 0; i < responses.length; i++) {
-
+        for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
+            // Do the drawing on the canvas
+            var start = responsesSoFar / totalResponses;
+            var end = (responsesSoFar + responses[i].count) / totalResponses;
+            var color = responses[i].color;
+            ctx.drawWedgeBG(start, end, radius, color);
+            responsesSoFar += responses[i].count;
+        }
+        //ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        //ctx.fillRect(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
+        for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
             // Do the drawing on the canvas
             var start = responsesSoFar / totalResponses;
             var end = (responsesSoFar + responses[i].count) / totalResponses;
             var color = responses[i].color;
             ctx.drawWedge(start, end, radius, color);
+            responsesSoFar += responses[i].count;
+        }
 
+        for(var i = 0; i < responses.length; i++) {
             // Draw the legend
-            ctx.fillStyle = color;
+            ctx.fillStyle = responses[i].color;
             ctx.fillRect(2 * radius + 10, 20 * i + 30, 10, 10);
             ctx.fillStyle = "black";
             ctx.fillText(responses[i].choiceText, 2 * radius + 25, 20 * i + 40);
@@ -125,7 +179,27 @@ function showPieChart($data) {
             responseAsText.innerHTML += " chose \"" + responses[i].choiceText + ".\"";
             chart.appendChild(responseAsText);
 
-            responsesSoFar += responses[i].count;
+        }
+        function showActiveSegment(e) {
+            var x = e.pageX - chart.offsetLeft;
+            var y = e.pageY - chart.offsetTop;
+            var dx = x - center.x;
+            var dy = y / VERTICAL_COMPRESSION - center.y;
+            if(dx * dx + dy * dy < 100 * 100) {
+                for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
+                    var start = responsesSoFar / totalResponses;
+                    var end = (responsesSoFar + responses[i].count) / totalResponses;
+                    var distanceAroundCircle = Math.atan2(dy, dx) / (2 * Math.PI);
+                    if(distanceAroundCircle < 0) distanceAroundCircle = 1 + distanceAroundCircle;
+                    if(start < distanceAroundCircle && distanceAroundCircle < end) {
+                        chart.setAttribute("title", responses[i].choiceText);
+                    }
+                    responsesSoFar += responses[i].count;
+                }
+            }
+            else {
+                chart.removeAttribute("title");
+            }
         }
     })();
     </script>
