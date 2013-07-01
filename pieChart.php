@@ -35,7 +35,8 @@ function showPieChart($data) {
         var questionText = data.questionText;
         var totalResponses = 0;
 
-        var VERTICAL_COMPRESSION = 0.8;
+        var RADIUS = 100;
+        var VERTICAL_COMPRESSION = 0.6;
 
         function randomColor(i) {
             //var color = "#" + (Math.random()*(1<<24)|0).toString(16);
@@ -145,46 +146,64 @@ function showPieChart($data) {
 
 
         var radius = 100;
-        ctx.fillStyle = "black";
-        ctx.fillText("Legend:", 2 * radius + 40, 20);
-        for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
-            // Do the drawing on the canvas
-            var start = responsesSoFar / totalResponses;
-            var end = (responsesSoFar + responses[i].count) / totalResponses;
-            var color = responses[i].color;
-            ctx.drawWedgeBG(start, end, radius, color);
-            responsesSoFar += responses[i].count;
-        }
-        //ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-        //ctx.fillRect(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
-        for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
-            // Do the drawing on the canvas
-            var start = responsesSoFar / totalResponses;
-            var end = (responsesSoFar + responses[i].count) / totalResponses;
-            var color = responses[i].color;
-            ctx.drawWedge(start, end, radius, color);
-            responsesSoFar += responses[i].count;
-        }
-
-        for(var i = 0; i < responses.length; i++) {
-            // Draw the legend
-            ctx.fillStyle = responses[i].color;
-            ctx.fillRect(2 * radius + 10, 20 * i + 30, 10, 10);
+        function showPieChart() {
+            ctx.clearRect(0, 0, chart.width, chart.height);
             ctx.fillStyle = "black";
-            ctx.fillText(responses[i].choiceText, 2 * radius + 25, 20 * i + 40);
+            ctx.fillText("Legend:", 2 * radius + 40, 20);
+            for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
+                // Do the drawing on the canvas
+                var start = responsesSoFar / totalResponses;
+                var end = (responsesSoFar + responses[i].count) / totalResponses;
+                var color = responses[i].color;
+                var bold = (chart.title == responses[i].choiceText);
+                ctx.drawWedgeBG(start, end, radius, color, bold);
+                responsesSoFar += responses[i].count;
+            }
+            //ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+            //ctx.fillRect(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
+            for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
+                // Do the drawing on the canvas
+                var start = responsesSoFar / totalResponses;
+                var end = (responsesSoFar + responses[i].count) / totalResponses;
+                var color = responses[i].color;
+                var bold = (chart.getAttribute("title") == responses[i].choiceText);
+                ctx.drawWedge(start, end, radius, color, bold);
+                responsesSoFar += responses[i].count;
+            }
 
-            // For accessibility
-            var responseAsText = document.createElement("p");
-            responseAsText.innerHTML  = responses[i].count + " out of " + totalResponses + " participants";
-            responseAsText.innerHTML += " chose \"" + responses[i].choiceText + ".\"";
-            chart.appendChild(responseAsText);
+            for(var i = 0; i < responses.length; i++) {
+                // Draw the legend
+                ctx.fillStyle = responses[i].color;
+                ctx.fillRect(2 * radius + 10, 20 * i + 30, 10, 10);
+                ctx.fillStyle = "black";
+                ctx.fillText(responses[i].choiceText, 2 * radius + 25, 20 * i + 40);
 
+                // For accessibility
+                var responseAsText = document.createElement("p");
+                responseAsText.innerHTML  = responses[i].count + " out of " + totalResponses + " participants";
+                responseAsText.innerHTML += " chose \"" + responses[i].choiceText + ".\"";
+                chart.appendChild(responseAsText);
+
+            }
         }
         function showActiveSegment(e) {
             var x = e.pageX - chart.offsetLeft;
             var y = e.pageY - chart.offsetTop;
             var dx = x - center.x;
             var dy = y / VERTICAL_COMPRESSION - center.y;
+            var origTitle = chart.getAttribute("title");
+            function showTitleText(curTitle) {
+                // Remove it first so that it shows in the right spot.
+                if(chart.getAttribute("title") && chart.getAttribute("title") != curTitle) {
+                    chart.removeAttribute("title");
+                }
+                if(curTitle !== origTitle) {
+                    setTimeout(function() {
+                        chart.setAttribute("title", curTitle);
+                        showPieChart();
+                    }, 1);
+                }
+            };
             if(dx * dx + dy * dy < 100 * 100) {
                 for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
                     var start = responsesSoFar / totalResponses;
@@ -192,15 +211,20 @@ function showPieChart($data) {
                     var distanceAroundCircle = Math.atan2(dy, dx) / (2 * Math.PI);
                     if(distanceAroundCircle < 0) distanceAroundCircle = 1 + distanceAroundCircle;
                     if(start < distanceAroundCircle && distanceAroundCircle < end) {
-                        chart.setAttribute("title", responses[i].choiceText);
+                        showTitleText(responses[i].choiceText);
                     }
                     responsesSoFar += responses[i].count;
                 }
             }
             else {
+                if(origTitle) {
+                    chart.removeAttribute("title");
+                    showPieChart();
+                }
                 chart.removeAttribute("title");
             }
         }
+        showPieChart();
     })();
     </script>
 <?
