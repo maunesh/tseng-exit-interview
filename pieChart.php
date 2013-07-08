@@ -170,7 +170,9 @@ function showPieChart($data) {
                 ctx.drawWedge(start, end, radius, color, bold);
                 responsesSoFar += responses[i].count;
             }
-
+            showLegend();
+        }
+        function showLegend() {
             for(var i = 0; i < responses.length; i++) {
                 // Draw the legend
                 ctx.fillStyle = responses[i].color;
@@ -204,7 +206,7 @@ function showPieChart($data) {
                     }, 1);
                 }
             };
-            if(dx * dx + dy * dy < 100 * 100) {
+            if(dx * dx + dy * dy < RADIUS * RADIUS) {
                 for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
                     var start = responsesSoFar / totalResponses;
                     var end = (responsesSoFar + responses[i].count) / totalResponses;

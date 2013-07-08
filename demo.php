@@ -1,6 +1,7 @@
 <h1>Pie chart demo</h1>
 <?
 include "./pieChart.php";
+include "./barChart.php";
 showPieChart(array(
         "questionText" => "Where did you take online courses before coming to the Tseng College?",
         "responses" => array(
@@ -26,7 +27,7 @@ showPieChart(array(
             )
         )
     ));
-showPieChart(array(
+showBarChart(array(
         "questionText" => "Where did you take online courses before coming to the Tseng College?",
         "responses" => array(
             array(
