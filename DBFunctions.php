@@ -179,5 +179,36 @@ function getSurveyResponseID($code) {
     }
     return $id;
 }
+/*
+function getResponses($question_id, $survey_id) {
+    $unsortedResponses = array();
+    $rows = resultsAsArray(dbQuery("SELECT ResponseText FROM QuestionResponses
+        WHERE Question_ID={$question_id}
+        AND Survey_ID={$survey_id}".
+        //"AND QuestionType=\"radio\"".
+        ";"));
+    foreach($rows as $row) {
+        $unsortedResponses[] = $row["ResponseText"];
+    }
+    sort($unsortedResponses);
+    $sortedResponses = array();
+    for($i = 0; $i < sizeof($unsortedResponses); $i++) {
+        if($i <= 0 or $unsortedResponses[$i] !=  $unsortedResponses[$i - 1]) {
+            $response = array(
+                "choiceText" => $unsortedResponses[$i],
+                "count" => 1
+            );
+        } 
+    }
+}
+function getFormattedQuestionData($survey_id) {
+    $question_ids = getQuestionIDs($survey_id);
+    $questiondata = array();
+    foreach($question_id in $question_ids) {
+        $qd = array();
+        $qd["questionText"] = getQuestionText($question_id, $survey_id);
+    }
+}
+ */
 init();
 ?>
