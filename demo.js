@@ -3,7 +3,14 @@ xhr.open("GET", "./results.csv");
 xhr.send();
 xhr.onreadystatechange = function() {
     if(xhr.response) {
-        show(xhr.response);
+        if(document.reasyState === "complete") {
+            show(xhr.response);
+        }
+        else {
+            window.addEventListener("load", function() {
+                show(xhr.response);
+            });
+        }
         xhr.onreadystatechange = function(){};
     }
 }
@@ -47,15 +54,69 @@ function show(csv_data) {
             questions.splice(j+1, i - j);
         }
     }
-    var questionList = document.createElement("ol");
-    document.body.appendChild(questionList);
+    var questionList = document.createElement("div");
+    var resultsDiv = document.getElementById('results');
+    var questionNav = document.getElementById('question-nav');
+    //var questionNavTimeout = setTimeout(stickyQuestionNav, 500);
+    
+    function stickyQuestionNav() {
+        var currentMTop = parseInt(questionNav.style["margin-top"].toString().match(/\d+/g));
+        var newMTop = currentMTop;
+        var dy = window.scrollY - questionNav.offsetTop;
+        newMTop += dy;
+        if(newMTop < 0) {
+            newMTop = 0;
+        }
+        questionNav.style["margin-top"] = newMTop + 'px';
+        questionNavTimeout = setTimeout(stickyQuestionNav, 500);
+    }
+    document.addEventListener('scroll', function() {
+        clearTimeout(questionNavTimeout);
+        questionNavTimeout = setTimeout(stickyQuestionNav, 500);
+    });
+    resultsDiv.appendChild(questionList);
+    //document.body.appendChild(questionList);
     var pieChartId = 1;
     var barChartId = 1;
     questions.forEach(function(question, index) {
-        var questionContainer = document.createElement("li");
+        //accessibility
+        var qID = 'question-' + (index + 1);
+        var navLi = document.createElement('li');
+        navLi.style['line-height'] = '2em';
+        var navLink = document.createElement('a');
+        navLink.innerHTML = "Question " + (index+1);
+        navLink.href = '#' + qID;
+        navLink.title = question.questionText;
+        navLink.classList.add("btnarrow");
+        navLi.appendChild(navLink);
+        questionNav.appendChild(navLi);
+
+        var questionContainer = document.createElement("div");
         var questionTitle = document.createElement("h2");
+        questionTitle.id = qID;
+        var hiddenIndicator = document.createElement('a');
+        var shownIndicator = document.createElement('a');
+        hiddenIndicator.innerHTML = "Show responses >";
+        shownIndicator.innerHTML = "< Hide responses";
+        hiddenIndicator.classList.add("btnarrow");
+        shownIndicator.classList.add("btnarrow");
+        shownIndicator.classList.add("hidden");
+        var questionResponses = document.createElement("div");
+        questionResponses.classList.add('hidden');
+        questionTitle.addEventListener('click', showHideResponses);
+        hiddenIndicator.addEventListener('click', showHideResponses);
+        shownIndicator.addEventListener('click', showHideResponses);
+        questionResponses.addEventListener('click', showHideResponses);
+        function showHideResponses() {
+            questionResponses.classList.toggle('hidden');
+            hiddenIndicator.classList.toggle('hidden');
+            shownIndicator.classList.toggle("hidden");
+        }
         questionContainer.appendChild(questionTitle);
-        questionTitle.innerHTML = question.questionText;
+        questionContainer.appendChild(hiddenIndicator);
+        questionContainer.appendChild(shownIndicator);
+        questionContainer.appendChild(questionResponses);
+        questionTitle.innerHTML = (index+1) + '. ' + question.questionText;
         if(question.type == "Open-Ended Response") {
             var responseList = document.createElement("ul");
             question.responses.forEach(function(response, index) {
@@ -65,7 +126,7 @@ function show(csv_data) {
                     responseList.appendChild(responseContainer);
                 }
             });
-            questionContainer.appendChild(responseList);
+            questionResponses.appendChild(responseList);
         }
         else {
             var responses = {};
@@ -98,16 +159,30 @@ function show(csv_data) {
             console.log(question);
             if(question.type) {
                 var pieChart = getPieChart(question, pieChartId);
-                questionContainer.appendChild(pieChart);
+                questionResponses.appendChild(pieChart);
                 pieChartId += 1;
             }
             else {
                 var barChart = getBarChart(question, barChartId);
-                questionContainer.appendChild(barChart);
+                questionResponses.appendChild(barChart);
                 barChartId += 1;
             }
         }
         questionList.appendChild(questionContainer);
     });
-    console.log(questions);
+    function $$(query) {
+        try {
+            return Array.prototype.slice.call(document.querySelectorAll(query));
+        }
+        catch(e) {
+            console.log("Query `" + query + "` failed");
+            console.log(e);
+            return [];
+        }
+    }
+    $$("ol li h2").forEach(function(h2) {
+        h2.addEventListener("click", function() {
+            var responses = h2.parentNode.getElementsByTagName("ul")[0];
+        })
+    });
 }

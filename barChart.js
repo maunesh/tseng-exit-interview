@@ -27,7 +27,7 @@ function getBarChart(question, id) {
     // changed in the future.
     var caption = document.createElement("div");
     caption.innerHTML = data.questionText;
-    caption.setAttribute("class", "caption");
+    caption.setAttribute("class", "hidden caption");
     chartContainer.appendChild(caption);
 
     // The chart itself is an HTML canvas. There are upsides and downsides
@@ -45,13 +45,20 @@ function getBarChart(question, id) {
     ctx.strokeStyle = "black";
     ctx.fillStyle = "black";
     var baseY = chart.height * 0.8;
-    ctx.drawBar = function(x, height, color, bold) {
+    ctx.drawBar = function(x, height, color, bold, text) {
         // Start and end are numbers from 0 to 1
         ctx.fillStyle = color;
         ctx.fillRect(x, baseY - height, 20, height);
         ctx.lineWidth = 2 + 2 * bold;
         ctx.strokeStyle = "black";
         ctx.strokeRect(x - 1, baseY - height - 1, 20 + 1, height + 1);
+        var origFont = ctx.font;
+        ctx.font = '20px arial'
+        ctx.fillStyle = 'black';
+        ctx.strokeStyle = 'black';
+        ctx.fillText(text, x, baseY + 25, 50);
+        ctx.strokeText(text, x, baseY + 25, 50);
+        ctx.font = origFont;
         ctx.lineWidth = 1;
     }
 
@@ -67,8 +74,9 @@ function getBarChart(question, id) {
             var x = i * 30 + 10;
             var height = responses[i].count * chart.height * 0.6 / mostForOneChoice;
             var color = responses[i].color;
-            var bold = (chart.title == responses[i].choiceText);
-            ctx.drawBar(x, height, color, bold);
+            var text = responses[i].choiceText;
+            var bold = (chart.title == text);
+            ctx.drawBar(x, height, color, bold, text);
 
             // Draw the legend
 

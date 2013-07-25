@@ -1,0 +1,53 @@
+* {
+    font-family: sans-serif;
+    box-sizing: border-box;
+}
+h1 {
+    line-height: 1;
+    text-align: center;
+    text-decoration: underline;
+}
+ol {
+    max-width: 1000px;
+    margin: 0 auto;
+    font-weight: bold;
+    font-size: 14pt;
+}
+ol li {
+    list-style-position: inside;
+    border: 1px solid black;
+    margin-top: 1em;
+}
+ol li h2 {
+    line-height: 1;
+    font-size: 14pt;
+    background: lightblue;
+    cursor: default;
+    margin: 0;
+}
+ol li ul {
+    margin: 0;
+    font-weight: normal;
+    font-size: 12pt;
+    list-style-type: none;
+    padding: 0em;
+}
+ol li ul li {
+    display: block;
+    border-radius: 0px 0px 0px 0px;
+    margin: 0em;
+    padding: 0em 1em;
+    border: 0;
+}
+ol li ul li:nth-child(2n) {
+    background-color: #fee;
+}
+ol li ul li:nth-child(2n + 1) {
+    background-color: #eef;
+}
+ol li ul li:last-child {
+    border-radius: 0px 0px 9px 9px;
+}
+.hidden {
+    display: none;
+}

@@ -1,7 +1,7 @@
-function getPieChart(question, id) {
+(function() {
     // Get the data from the server-side PHP to the client-side JS and do
     // some basic processing on it.
-    var data = question;
+    var data = {"questionText":"Where did you take online courses before coming to the Tseng College?","responses":[{"choiceText":"CSUN","count":2},{"choiceText":"UCLA","count":2},{"choiceText":"ASU","count":1},{"choiceText":"Santa Monica College","count":2},{"choiceText":"Pierce College","count":2}]};
     var responses = data.responses;
     var questionText = data.questionText;
     var totalResponses = 0;
@@ -11,8 +11,8 @@ function getPieChart(question, id) {
 
     function randomColor(i) {
         //var color = "#" + (Math.random()*(1<<24)|0).toString(16);
-        var colors = ["yellow", "blue", "red", "green", "orange", "purple", "black", "pink", "gray"];
-        if(typeof i != "undefined") var color = colors[i];
+        var colors = ["red", "orange", "yellow", "green", "blue", "purple", "black", "pink", "gray"];
+        if(i !== undefined) var color = colors[i];
         else var color = colors[(Math.random() * colors.length)|0];
         return color;
     }
@@ -28,20 +28,19 @@ function getPieChart(question, id) {
                         collision = true;
                     }
                 }
-            } while(false);
+            } while(collision);
         }
         totalResponses += responses[i].count;
     }
 
     // Make sure we have the right element to put the chart in.
-    var chartContainer = document.createElement("div");
-    chartContainer.setAttribute("id", "pie-chart-" + id);
+    var chartContainer = document.getElementById("pie-chart-1");
 
     // The caption, in this case, contains the question. This could be
     // changed in the future.
     var caption = document.createElement("div");
     caption.innerHTML = data.questionText;
-    caption.setAttribute("class", "hidden caption");
+    caption.setAttribute("class", "caption");
     chartContainer.appendChild(caption);
 
     // The chart itself is an HTML canvas. There are upsides and downsides
@@ -60,8 +59,7 @@ function getPieChart(question, id) {
         x: chart.width / 5,
         y: chart.height / 2
     };
-    ctx.drawWedgeBG = function(start, end, radius, color, bold, text) {
-        if(!text) text = 'caption';
+    ctx.drawWedgeBG = function(start, end, radius, color, bold) {
         ctx.scale(1, VERTICAL_COMPRESSION);
         ctx.beginPath();
         // First the 3d part
@@ -89,8 +87,7 @@ function getPieChart(question, id) {
         ctx.stroke();
         ctx.scale(1, 1 / VERTICAL_COMPRESSION);
     }
-    ctx.drawWedge = function(start, end, radius, color, bold, text) {
-        if(!text) text = 'caption';
+    ctx.drawWedge = function(start, end, radius, color, bold) {
         // Start and end are numbers from 0 to 1
         ctx.scale(1, VERTICAL_COMPRESSION);
         // First the 3d part
@@ -99,8 +96,8 @@ function getPieChart(question, id) {
             y: center.y + Math.sin(start * 2 * Math.PI) * radius
         }
         var endArc = {
-            x: center.x + Math.cos(end * 2 * Math.PI) * radius,
-            y: center.y + Math.sin(end * 2 * Math.PI) * radius
+            x: center.x + Math.cos(start * 2 * Math.PI) * radius,
+            y: center.y + Math.sin(start * 2 * Math.PI) * radius
         }
         ctx.beginPath();
         ctx.moveTo(center.x, center.y);
@@ -112,22 +109,10 @@ function getPieChart(question, id) {
         ctx.closePath();
         ctx.strokeStyle = "black";
         ctx.fill();
-        
-        var wedgeCenter = {
-            x: center.x + Math.cos((start + end) * Math.PI) * radius / 2,
-            y: center.y + Math.sin((start + end) * Math.PI) * radius / 2,
-        }
         if(bold) ctx.lineWidth = 3;
         else ctx.lineWidth = 1;
         ctx.stroke();
-        var origFont = ctx.font;
-        ctx.font = '20px arial'
-        ctx.fillStyle = 'black';
-        ctx.strokeStyle = 'black';
-        ctx.fillText(text, wedgeCenter.x, wedgeCenter.y, 100);
-        ctx.strokeText(text, wedgeCenter.x, wedgeCenter.y, 100);
         ctx.scale(1, 1 / VERTICAL_COMPRESSION);
-        ctx.font = origFont;
     }
 
 
@@ -141,9 +126,8 @@ function getPieChart(question, id) {
             var start = responsesSoFar / totalResponses;
             var end = (responsesSoFar + responses[i].count) / totalResponses;
             var color = responses[i].color;
-            var text = responses[i].choiceText;
-            var bold = (chart.title == text);
-            ctx.drawWedgeBG(start, end, radius, color, bold, text);
+            var bold = (chart.title == responses[i].choiceText);
+            ctx.drawWedgeBG(start, end, radius, color, bold);
             responsesSoFar += responses[i].count;
         }
         //ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
@@ -153,14 +137,11 @@ function getPieChart(question, id) {
             var start = responsesSoFar / totalResponses;
             var end = (responsesSoFar + responses[i].count) / totalResponses;
             var color = responses[i].color;
-            var text = responses[i].choiceText;
-            var bold = (chart.getAttribute("title") == text);
-            ctx.drawWedge(start, end, radius, color, bold, text);
+            var bold = (chart.getAttribute("title") == responses[i].choiceText);
+            ctx.drawWedge(start, end, radius, color, bold);
             responsesSoFar += responses[i].count;
         }
-        showLegend();
-    }
-    function showLegend() {
+
         for(var i = 0; i < responses.length; i++) {
             // Draw the legend
             ctx.fillStyle = responses[i].color;
@@ -184,7 +165,7 @@ function getPieChart(question, id) {
         var origTitle = chart.getAttribute("title");
         function showTitleText(curTitle) {
             // Remove it first so that it shows in the right spot.
-            if(chart.getAttribute("title") && chart.getAttribute("title") != curTitle) {
+            if(chart.getAttribute("title") && chart.getAttribute("title") !== curTitle) {
                 chart.removeAttribute("title");
             }
             if(curTitle !== origTitle) {
@@ -194,7 +175,7 @@ function getPieChart(question, id) {
                 }, 1);
             }
         };
-        if(dx * dx + dy * dy < RADIUS * RADIUS) {
+        if(dx * dx + dy * dy < 100 * 100) {
             for(var i = 0, responsesSoFar = 0; i < responses.length; i++) {
                 var start = responsesSoFar / totalResponses;
                 var end = (responsesSoFar + responses[i].count) / totalResponses;
@@ -215,5 +196,4 @@ function getPieChart(question, id) {
         }
     }
     showPieChart();
-    return chartContainer;
-};
+})();
