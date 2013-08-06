@@ -53,7 +53,7 @@ function getBarChart(question, id) {
         ctx.strokeStyle = "black";
         ctx.strokeRect(x - 1, baseY - height - 1, 20 + 1, height + 1);
         var origFont = ctx.font;
-        ctx.font = '20px arial'
+        ctx.font = '10px arial'
         ctx.fillStyle = 'black';
         ctx.strokeStyle = 'black';
         ctx.fillText(text, x, baseY + 25, 50);

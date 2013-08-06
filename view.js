@@ -1,7 +1,7 @@
+if(!resultslocation) var resultslocation = "./results.csv";
 var loc = window.location.toString();
-var csvlocation = loc.match(/[^\/\.]+(?=\.\w+$)/g).toString() + '.csv';
 var xhr = new XMLHttpRequest();
-xhr.open("GET", "./results.csv");
+xhr.open("GET", resultslocation);
 xhr.send();
 xhr.onreadystatechange = function() {
     if(xhr.response) {
@@ -17,6 +17,7 @@ xhr.onreadystatechange = function() {
     }
 }
 function show(csv_data) {
+    window.csv_data = csv_data;
     var metaColCount = 9;
     var data = CSV.parse(csv_data);
     // First row, columns 9 and up.
@@ -25,7 +26,7 @@ function show(csv_data) {
         .map(function(question, index) {
             return {
                 questionText: question,
-                responses: []
+            responses: []
             }
         });
     var types     = data[1]
@@ -37,10 +38,10 @@ function show(csv_data) {
         .slice(2, data.length)
         .map(function(row, responseIndex) {
             row
-                .slice(metaColCount, row.length)
-                .forEach(function(response, questionIndex) {
-                    questions[questionIndex].responses.push(response);
-                });
+            .slice(metaColCount, row.length)
+            .forEach(function(response, questionIndex) {
+                questions[questionIndex].responses.push(response);
+            });
         });
     // Collapse multiple answer options -- untested on more than 2 options, so beware.
     for(var i = 0; i < questions.length; i++) {
@@ -59,8 +60,8 @@ function show(csv_data) {
     var questionList = document.createElement("div");
     var resultsDiv = document.getElementById('results');
     var questionNav = document.getElementById('question-nav');
-    //var questionNavTimeout = setTimeout(stickyQuestionNav, 500);
-    
+    var questionNavTimeout = setTimeout(/*stickyQuestionNav*/Function(), 500);
+
     function stickyQuestionNav() {
         var currentMTop = parseInt(questionNav.style["margin-top"].toString().match(/\d+/g));
         var newMTop = currentMTop;
@@ -74,7 +75,7 @@ function show(csv_data) {
     }
     document.addEventListener('scroll', function() {
         clearTimeout(questionNavTimeout);
-        questionNavTimeout = setTimeout(stickyQuestionNav, 500);
+        questionNavTimeout = setTimeout(/*stickyQuestionNav*/Function(), 500);
     });
     resultsDiv.appendChild(questionList);
     //document.body.appendChild(questionList);
@@ -99,16 +100,28 @@ function show(csv_data) {
         var hiddenIndicator = document.createElement('a');
         var shownIndicator = document.createElement('a');
         hiddenIndicator.innerHTML = "Show responses >";
+        hiddenIndicator.classList.add("show");
         shownIndicator.innerHTML = "< Hide responses";
+        shownIndicator.classList.add("hide");
         hiddenIndicator.classList.add("btnarrow");
         shownIndicator.classList.add("btnarrow");
         shownIndicator.classList.add("hidden");
         var questionResponses = document.createElement("div");
         questionResponses.classList.add('hidden');
         questionTitle.addEventListener('click', showHideResponses);
-        hiddenIndicator.addEventListener('click', showHideResponses);
-        shownIndicator.addEventListener('click', showHideResponses);
-        questionResponses.addEventListener('click', showHideResponses);
+        hiddenIndicator.addEventListener('click', showResponses);
+        shownIndicator.addEventListener('click', hideResponses);
+        questionResponses.addEventListener('click', hideResponses);
+        function showResponses() {
+            questionResponses.classList.remove('hidden');
+            hiddenIndicator.classList.add('hidden');
+            shownIndicator.classList.remove("hidden");
+        }
+        function hideResponses() {
+            questionResponses.classList.add('hidden');
+            hiddenIndicator.classList.remove('hidden');
+            shownIndicator.classList.add("hidden");
+        }
         function showHideResponses() {
             questionResponses.classList.toggle('hidden');
             hiddenIndicator.classList.toggle('hidden');
@@ -139,7 +152,7 @@ function show(csv_data) {
                 else {
                     responses[response] = {
                         choiceText: response,
-                        count: 1
+                count: 1
                     };
                 }
             });
@@ -172,19 +185,56 @@ function show(csv_data) {
         }
         questionList.appendChild(questionContainer);
     });
-    function $$(query) {
-        try {
-            return Array.prototype.slice.call(document.querySelectorAll(query));
-        }
-        catch(e) {
-            console.log("Query `" + query + "` failed");
-            console.log(e);
-            return [];
-        }
-    }
     $$("ol li h2").forEach(function(h2) {
         h2.addEventListener("click", function() {
             var responses = h2.parentNode.getElementsByTagName("ul")[0];
         })
     });
+}
+function $$(query) {
+    try {
+        return Array.prototype.slice.call(document.querySelectorAll(query));
+    }
+    catch(e) {
+        console.log("Query `" + query + "` failed");
+        console.log(e);
+        return [];
+    }
+}
+function showAll() {
+    $$('.show').forEach(function(el) {el.click()});
+}
+function hideAll() {
+    $$('.hide').forEach(function(el) {el.click()});
+}
+function showAsTable() {
+    if(csv_data) {
+        var tableviewer = $$('#tableviewer')[0];
+        var table = document.createElement('table');
+        table.innerHTML = (
+                '<tr>' + 
+        CSV.parse(csv_data).map(function(row, index) {
+            if(index) {
+                return '<td>' + row.slice(9).join('</td><td>') + '</td>';
+            }
+            else {
+                return '<th>' + row.slice(9).join('</th><th>') + '</th>';
+            }
+        }).join('</tr><tr>')
+        + '</tr>'
+        );
+        var closeButton = document.createElement('a');
+        closeButton.classList.add('close');
+        closeButton.innerHTML = 'x';
+        closeButton.onclick = function() {
+            tableviewer.classList.add('hidden');
+            $$('.cnt0')[0].classList.remove('hidden');
+        }
+        table.classList.add('results-table');
+        tableviewer.innerHTML = '';
+        tableviewer.appendChild(table);
+        tableviewer.appendChild(closeButton);
+        $$('.cnt0')[0].classList.add('hidden');
+        tableviewer.classList.remove('hidden');
+    }
 }
